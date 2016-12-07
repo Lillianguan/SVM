@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<settings>
+   <path1>C:\Users\Cailin\Desktop\Workspace\StampRec\SVMtrain\plates1</path1>
+   <path2>C:\Users\Cailin\Desktop\Workspace\StampRec\SVMtrain\plates2</path2>
+   <path3>C:\Users\Cailin\Desktop\Workspace\StampRec\SVMtrain\plates3</path3>
+   <path4>C:\Users\Cailin\Desktop\Workspace\StampRec\SVMtrain\noplates</path4>
+   <test>3</test>
+   <test2>2</test2>
+</settings> 

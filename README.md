@@ -1,1 +1,1 @@
-# SVM
+# SVM Classifier for Stamp Recognition

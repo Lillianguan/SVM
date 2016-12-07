@@ -1,0 +1,8 @@
+﻿  StampRect.cpp
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(132): warning C4018: '<' : signed/unsigned mismatch
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(229): warning C4305: 'initializing' : truncation from 'double' to 'float'
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(230): warning C4305: 'initializing' : truncation from 'double' to 'float'
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(231): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(232): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+c:\users\cailin\desktop\workspace\stamprec\recttangle\stamprect.cpp(236): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
+  Recttangle.vcxproj -> C:\Users\Cailin\Desktop\Workspace\StampRec\Debug\Recttangle.exe
