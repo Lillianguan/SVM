@@ -1,13 +1,12 @@
 #include "StdAfx.h"
 #include "trainSVM.h"
 
-trainSVM* trainSVM::inst_ = nullptr;
 
 trainSVM::trainSVM(bool saveImages)
 {
 	//Set SVM params
 	SVM_params.svm_type = CvSVM::C_SVC;
-	SVM_params.kernel_type = CvSVM::LINEAR; //CvSVM::LINEAR;
+	SVM_params.kernel_type = CvSVM::LINEAR; 
 	SVM_params.degree = 2;
 	SVM_params.gamma = 1;
 	SVM_params.coef0 = 0;
@@ -23,110 +22,82 @@ trainSVM::~trainSVM(void)
 {
 }
 
-trainSVM* trainSVM::getInstance()
+map<string, vector<Plate>> trainSVM::process(vector<Plate>& posible_regions)
 {
-	if (inst_ == nullptr)
-	{
-		inst_ = new trainSVM();
-	}
-	return inst_;
-}
-
-
-std::map<std::string, vector<Plate>> trainSVM::process(vector<Plate>& posible_regions)
-{
-	// read learned data
+	//read learned data
 	fs.open("SVM.xml", FileStorage::READ);
 	fs["TrainingData"] >> SVM_TrainingData;
 	fs["classes"] >> SVM_Classes;
 	fs.release();
 
-	// classification
+	//classification
 	CvSVM svmClassifier(SVM_TrainingData, SVM_Classes, Mat(), Mat(), SVM_params);
 
-	// map to vector
-	std::map<std::string, vector<Plate>> regions;
+	//map to vector
+	map<string, vector<Plate>> regions;
 	for (auto i = 0; i < posible_regions.size(); i++)
 	{
 		auto img = posible_regions[i].plateImg;
 		auto p = img.reshape(1, 1);
 		p.convertTo(p, CV_32FC1);
 		auto response = static_cast<int>(svmClassifier.predict(p, false));
-		cout << "Found Type:" << response << endl;
-		regions["Type" + response].push_back(posible_regions[i]);
-		float decision = svmClassifier.predict(p, true);
-		float confidence = 1.0 / (1.0 + exp(-decision));
-		cout << "Confidence:" << confidence << endl;
+		if (response != 0)
+		{
+			stringstream ss;
+			ss << response;
+			cout << "Found Type:" << response << endl;
+			regions["Type" + ss.str()].push_back(posible_regions[i]);
+			float decision = svmClassifier.predict(p, true);
+			float confidence = 1.0 / (1.0 + exp(-decision));
+			cout << "Confidence:" << confidence << endl;
+		}
 	}
 
 	return regions;
 }
 
-void trainSVM::fsOperatorAndDraw(Mat input_image, vector<Plate>& posible_regions, string filename)
+void trainSVM::fsOperatorAndDraw(string img_path, vector<Plate>& posible_regions)
 {
-	//fs
+
+	//SVM date to read
 	fs.open("SVM.xml", FileStorage::READ);
 	fs["TrainingData"] >> SVM_TrainingData;
 	fs["classes"] >> SVM_Classes;
 
 	CvSVM svmClassifier(SVM_TrainingData, SVM_Classes, Mat(), Mat(), SVM_params);
-	vector<Plate> plates1, plates2, plates3;
-	for (int i = 0; i < posible_regions.size(); i++)
+
+	//read image
+	Mat input_image = imread(img_path);
+
+	//get the filename 
+	filename = FileOperation::getFilename(img_path);
+
+	//map the possible regions to vector
+	map<string, vector<Plate>> regions;
+	for (auto i = 0; i < posible_regions.size(); i++)
 	{
-		Mat img = posible_regions[i].plateImg;
-		Mat p = img.reshape(1, 1);
+		auto img = posible_regions[i].plateImg;
+		auto p = img.reshape(1, 1);
 		p.convertTo(p, CV_32FC1);
-		int response = (int)svmClassifier.predict(p, false);
-		if (response == 1)
-			plates1.push_back(posible_regions[i]);
-		if (response == 2)
-			plates2.push_back(posible_regions[i]);
-		if (response == 3)
-			plates3.push_back(posible_regions[i]);
-
-
-		
-	}
-	cout << "Num plates detected: " << plates1.size() << "\n";
-
-	for (int i = 0; i < plates1.size(); i++)
-	{
-		Plate plate = plates1[i];
-		cout << "================================================\n";
-		cout << "================================================\n";
-		rectangle(input_image, plate.position, Scalar(0, 255, 0), 5, 8); // grün
-		if (false)
+		auto response = static_cast<int>(svmClassifier.predict(p, false));
+		if (response != 0)
 		{
-			imshow("Plate Detected seg", plate.plateImg);
-			cvWaitKey(0);
-		}
-	}
-	for (int i = 0; i < plates2.size(); i++)
-	{
-		Plate plate = plates2[i];
-		cout << "================================================\n";
-		cout << "================================================\n";
-		rectangle(input_image, plate.position, Scalar(0, 0, 255), 5, 8); // rot
-		if (false)
-		{
-			imshow("Plate Detected seg", plate.plateImg);
-			cvWaitKey(0);
-		}
-	}
-	for (int i = 0; i < plates3.size(); i++)
-	{
-		Plate plate = plates3[i];
-		cout << "================================================\n";
-		cout << "================================================\n";
-		rectangle(input_image, plate.position, Scalar(255, 0, 0), 5, 8); // blau
-		if (false)
-		{
-			imshow("Plate Detected seg", plate.plateImg);
-			cvWaitKey(0);
+			stringstream ss;
+			ss << response;
+			cout << "================================================\n";
+			//drow the possible regions in grün
+			rectangle(input_image, posible_regions[i].position, Scalar(0, 255, 0), 5, 8);
+			//show the tpye of regions
+			putText(input_image, "Type" + ss.str(), Point(posible_regions[i].position.x, posible_regions[i].position.y),
+			        CV_FONT_HERSHEY_SIMPLEX,
+			        1,
+			        Scalar(0, 0, 200), 2);
+			cout << "Found Type:" << response << endl;
+			regions["Type" + ss.str()].push_back(posible_regions[i]);
 		}
 	}
 
-	if (true)
+	if (_saveImages)
 	{
 		stringstream ss(stringstream::in | stringstream::out);
 		ss << "ResultImages\\" << filename << "_" << ".jpg";
@@ -134,3 +105,5 @@ void trainSVM::fsOperatorAndDraw(Mat input_image, vector<Plate>& posible_regions
 	}
 	fs.release();
 }
+
+	

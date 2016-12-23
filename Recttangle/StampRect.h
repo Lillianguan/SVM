@@ -22,7 +22,7 @@ public:
 private:
 	bool _saveRegions;
 	bool _showSteps;
-	int _plates_Typnum;
+	int plates_Typenum;
 	string lern_path;
 	vector<string> path_Plates;
 	int numPlates;

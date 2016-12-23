@@ -17,12 +17,11 @@ class trainSVM
 public:
 	trainSVM(bool saveImages = false);
 	~trainSVM(void);
-	static trainSVM* getInstance();
 	map<string, vector<Plate>> process(vector<Plate>& posible_regions);
-	void fsOperatorAndDraw(Mat input_image, vector<Plate>& posible_regions, string filename);
+	void fsOperatorAndDraw(string img_path , vector<Plate>& posible_regions);
 	bool _saveImages;
 private:
-	static trainSVM * inst_;
+	string filename;
 	CvSVMParams SVM_params;
 	Mat SVM_TrainingData;
 	Mat SVM_Classes;

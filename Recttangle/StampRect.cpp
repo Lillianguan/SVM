@@ -4,14 +4,15 @@
 
 StampRect::StampRect(bool saveRegions, bool showSteps): numPlates(0)
 {
-	//Set Path
 	lern_path = "lernPlates\\";
-	_plates_Typnum = FileOperation::GetDirNumber(lern_path);
-	cout << _plates_Typnum << endl;
-	for (int i = 0; i < _plates_Typnum; i++)
+	//get the number of type
+	plates_Typenum = FileOperation::GetDirNumber(lern_path);
+	cout << plates_Typenum << endl;
+	for (int i = 0; i < plates_Typenum; i++)
 	{
 		stringstream ss(stringstream::in | stringstream::out);
 		ss << lern_path << "Plates" << i;
+		//get all platestype path
 		path_Plates.push_back(ss.str());
 	}
 
@@ -27,11 +28,15 @@ vector<Plate> StampRect::run(string imagePath, int x, int y) const
 {
 	// read image
 	auto input = imread(imagePath);
-
+	if (input.empty())
+	{
+		cout << "There ist no picture here!" << endl;
+	}
 	//get filename 
 	string filename = FileOperation::getFilename(imagePath);
 
 	vector<Plate> output;
+
 	//convert image to gray
 	Mat img_gray;
 	cvtColor(input, img_gray, CV_BGR2GRAY);
@@ -96,7 +101,7 @@ vector<Plate> StampRect::run(string imagePath, int x, int y) const
 		}
 	}
 
-	// Draw blue contours on a white image
+	//Draw blue contours on a white image
 	Mat result;
 	input.copyTo(result);
 	drawContours(result, contours_1, -1, Scalar(255, 0, 0), 10); // in blue
@@ -105,7 +110,7 @@ vector<Plate> StampRect::run(string imagePath, int x, int y) const
 	{
 		if (verifySizes(rects[i]))
 		{
-			// rotated rectangle drawing 
+			//rotated rectangle drawing 
 			Point2f rect_points[4];
 			rects[i].points(rect_points);
 			for (int j = 0; j < 4; j++)
@@ -143,18 +148,20 @@ vector<Plate> StampRect::run(string imagePath, int x, int y) const
 			Mat grayResult;
 			cvtColor(resultResized, grayResult, CV_BGR2GRAY);
 			blur(grayResult, grayResult, Size(3, 3));
-			namedWindow("grayResult", CV_WINDOW_NORMAL);
-			imshow("grayResult", grayResult);
 
-			cout << "There is your option:" << endl;
-			cout << "-------" << "0------" << "Noplates..." << endl;
-			cout << "-------" << "1------" << "Plates_Stamp...." << endl;
-			cout << "-------" << "2------" << "Plates_Mut...." << endl;
-			cout << "-------" << "3------" << "Plates_Barcode...." << endl;
-
-			char option = waitKey(0);
+			//save the plates
 			if (_saveRegions)
 			{
+				namedWindow("grayResult", CV_WINDOW_NORMAL);
+				imshow("grayResult", grayResult);
+				char option = waitKey(0);
+
+				cout << "There is your option:" << endl;
+				cout << "-------" << "0------" << "Noplates..." << endl;
+				cout << "-------" << "1------" << "Plates_Stamp...." << endl;
+				cout << "-------" << "2------" << "Plates_Mut...." << endl;
+				cout << "-------" << "3------" << "Plates_Barcode...." << endl;
+
 				//TODO automate this: display image and push 1,2,3,0
 				stringstream ss(stringstream::in | stringstream::out);
 				ss << lern_path << "plates" << option << "\\" << filename << "_" << x << "_" << y << i << ".jpg";
@@ -233,7 +240,7 @@ void StampRect::classificationImage()
 	vector<int> trainingLabels;
 	vector<string> file;
 	string format = ".jpg";
-	for (int i = 0; i < _plates_Typnum; i++)
+	for (int i = 0; i < plates_Typenum; i++)
 	{
 		FileOperation::GetAllFormatFiles(path_Plates[i], file, format);
 		numPlates = file.size();
@@ -244,13 +251,16 @@ void StampRect::classificationImage()
 			ss << file[j];
 			cout << ss.str() << endl;
 			Mat img = imread(ss.str(), 0);
-			if (img.empty())
+			if (!img.empty())
+			{
+				img = img.reshape(1, 1);
+				trainingImages.push_back(img);
+				trainingLabels.push_back(i);
+			}
+			else
 			{
 				cout << "There ist no picture here!" << endl;
 			}
-			img = img.reshape(1, 1);
-			trainingImages.push_back(img);
-			trainingLabels.push_back(i);
 		}
 		file.erase(file.begin(), file.end());
 	}

@@ -19,7 +19,6 @@ int main()
 	map<string, vector<Plate>> result = server(imagePath);
 
 	//ImageItem item = findRegions();
-
 	cout << "done.." << endl;
 	string a;
 	cin >> a;
@@ -32,10 +31,10 @@ map<string, vector<Plate>> server(const char* imagePath)
 	vector<Plate> possible_regions = obj->run(imagePath, 41, 30);
 	delete obj;
 
-	map<string, vector<Plate>> map = trainSVM::getInstance()->process(possible_regions);
-
-	Mat img = imread(imagePath);
-	trainSVM::getInstance()->fsOperatorAndDraw(img, possible_regions, "test");
+	trainSVM* train_svm = new trainSVM(true);
+	map<string, vector<Plate>> map = train_svm->process(possible_regions);
+	train_svm->fsOperatorAndDraw(imagePath, possible_regions);
+	delete train_svm;
 
 	return map;
 }
@@ -64,18 +63,22 @@ void detectRegion()
 		ss << files[i];
 		obj->run(files[i], 41, 30);
 	}
+	delete obj;
 }
 
 void classifyImage()
 {
 	StampRect* obj = new StampRect(true, false);
 	obj->classificationImage();
+	delete obj;
 	cout << "classify all the plates......" << endl;
 	cout << "CalssificationImage are done!!" << endl;
 }
 
 void findRegions()
 {
+	StampRect* obj = new StampRect();
+	trainSVM* train_svm = new trainSVM(true);
 	vector<string> files;
 	string formattif = ".bmp";
 	FileOperation::GetAllFormatFiles(path, files, formattif);
@@ -85,13 +88,11 @@ void findRegions()
 	{
 		stringstream ss(stringstream::in | stringstream::out);
 		ss << files[i];
-		string filename = FileOperation::getFilename(files[i]);
-		Mat image = imread(files[i]);
-		StampRect* obj = new StampRect();
 		vector<Plate> possible_regions = obj->run(files[i], 41, 30);
-		delete obj;
-		trainSVM::getInstance()->fsOperatorAndDraw(image, possible_regions, filename);
+		train_svm->fsOperatorAndDraw(files[i], possible_regions);
 	}
+	delete obj;
+	delete train_svm;
 	cout << "Done with find the region...." << endl;
 }
 
